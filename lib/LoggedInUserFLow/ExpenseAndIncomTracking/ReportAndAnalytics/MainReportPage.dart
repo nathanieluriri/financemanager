@@ -46,6 +46,7 @@ class _ReportAndAnalyticsPageState extends State<ReportAndAnalyticsPage>
           "Report And Visualization",
           style: TextStyle(fontSize: 15),
         ),
+        backgroundColor: Colors.white,
         centerTitle: true,
         leading: Icon(Icons.candlestick_chart),
         bottom: TabBar(
@@ -68,6 +69,7 @@ class _ReportAndAnalyticsPageState extends State<ReportAndAnalyticsPage>
               ),
             ]),
       ),
+        backgroundColor: Colors.white,
       body: TabBarView(controller: _tabController, children: [
         ReportsAndAnalyticsForIncome(userbox: widget.userBox,),
         ReportsAndAnalyticsForExpense(userbox: widget.userBox,),

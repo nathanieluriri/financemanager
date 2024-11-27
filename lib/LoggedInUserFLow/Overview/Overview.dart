@@ -266,7 +266,7 @@ class _OverviewState extends State<Overview> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        widget.accountDetails.get('transactions') == null
+                        widget.accountDetails.get('transactions') == null || widget.accountDetails.get('transactions')?.isEmpty
                             ? widget.accountDetails.get("Is Overview Loading") <
                                         20 ??
                                     false
@@ -286,7 +286,8 @@ class _OverviewState extends State<Overview> {
                                       ),
                                     ],
                                   )
-                                : Image(image: AssetImage("assets/tooltip.png"))
+                                : Image(image: AssetImage("assets/tooltip.png"),)
+
                             : widget.accountDetails.get("Is Overview Loading") <
                                         20 ??
                                     false

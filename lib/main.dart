@@ -14,6 +14,7 @@ import 'package:financemanager/Api/Goals/GetAllGoals.dart';
 import 'package:financemanager/Api/Goals/GetGoalStats.dart';
 import 'package:financemanager/Api/ReportAndAnalysis/GetCategorizedExpense.dart';
 import 'package:financemanager/Api/ReportAndAnalysis/GetCategorizedIncome.dart';
+import 'package:financemanager/Api/TokenChecker.dart';
 import 'package:financemanager/Api/connection.dart';
 import 'package:financemanager/LoggedInUserFLow/BudgetingAndMonitoring/PlanABudget.dart';
 import 'package:financemanager/LoggedInUserFLow/ExpenseAndIncomTracking/ExpenseTrackingPage.dart';
@@ -97,14 +98,14 @@ class _MainAppState extends State<MainApp> {
               password: Authbox.get("Login Password") ?? '',
               userdb: userbox);
           if (loggedIn) {
-            animateToPage(3);
+            jumpToPage(2);
           }
         },
         signUpButton: () {
           animateToPage(1);
         },
         forgottenPassword: () {
-          jumpToPage(2);
+          jumpToPage(8);
         },
         userdb: Authbox,
       ),
@@ -118,7 +119,7 @@ class _MainAppState extends State<MainApp> {
               password: Authbox.get("Password"),
               userdb: userbox);
           if (registered) {
-            jumpToPage(3);
+            animateToPage(2);
           }
         },
         backButton: () {
@@ -126,28 +127,23 @@ class _MainAppState extends State<MainApp> {
         },
         userbox: Authbox,
       ),
-      PasswordRecoveryPage(
-        //2
-        backButton: () {
-          jumpToPage(0);
-        },
-      ),
+
       Overview(
-          //3
+          //2
           accountDetails: userbox,
           moveToReportPage: () {
-            jumpToPage(8);
+            jumpToPage(7);
           },
           moveToGoalPage: () {
-            jumpToPage(5);
+            jumpToPage(4);
           },
           floatingActionButton: () {
-            animateToPage(4);
+            animateToPage(3);
           }),
       MoneyplanningPage(
-        //4
+        //3
         backButton: () {
-          animateToPage(3);
+          animateToPage(2);
         },
         userBox: userbox,
         incomePlanButton: () async {
@@ -160,7 +156,7 @@ class _MainAppState extends State<MainApp> {
                   .replaceAll(RegExp(r','), '')),
               categoryId: userbox.get("Selected Category Id"));
           if (response['status_code'] == 201) {
-            animateToPage(3);
+            animateToPage(2);
           }
         },
         expensePlanButton: () async {
@@ -173,24 +169,24 @@ class _MainAppState extends State<MainApp> {
                   .replaceAll(RegExp(r','), '')),
               categoryId: userbox.get("Selected Category Id"));
           if (response['status_code'] == 201) {
-            animateToPage(3);
+            animateToPage(2);
           }
         },
       ),
       MainPageForGoalsAndBudget(
-        //5
+        //4
         moveToReportPage: () {
-          jumpToPage(8);
+          jumpToPage(7);
         },
         moveToOverviewPage: () {
-          jumpToPage(3);
+          jumpToPage(2);
         },
         userBox: userbox,
         setupBudgetButton: () {
-          jumpToPage(7);
+          jumpToPage(6);
         },
         setupGoalButton: () {
-          animateToPage(6);
+          animateToPage(5);
         },
         editGoalButton: () {},
       ),
@@ -207,12 +203,12 @@ class _MainAppState extends State<MainApp> {
                     .replaceAll(RegExp(r','), '')),
                 bearerToken: userbox.get("Token"));
             if (response == 201) {
-              animateToPage(5);
+              animateToPage(4);
             }
           },
           backButton: () {
-            animateToPage(5);
-          }), //6
+            animateToPage(4);
+          }), //5
       PlanABudget(
           userBox: userbox,
           planABudgetButton: () async {
@@ -224,69 +220,82 @@ class _MainAppState extends State<MainApp> {
                 bearerToken: userbox.get("Token"));
 
             if (response['status_code'] == 201) {
-              animateToPage(5);
+              jumpToPage(4);
             }
           },
           backButton: () {
-            animateToPage(5);
-          }), //7
+            jumpToPage(4);
+          }), //6
       ReportAndAnalyticsPage(
+          //7
           moveToOverviewPage: () {
-            jumpToPage(3);
+            jumpToPage(2);
           },
           userBox: userbox,
           moveToGoalPage: () {
-            jumpToPage(5);
-          })
+            jumpToPage(4);
+          }),
+      PasswordRecoveryPage(
+        //8
+        backButton: () {
+          jumpToPage(0);
+        }, userbox: userbox,
+      ),
     ];
   }
 
   void _checkCategories() async {
     if (await connectionStatus()) {
-      final result = await fetchCategories(userbox.get("Token"));
-      if (result['status_code'] == 200) {
-        final incomeCategories = result['categories']
-            .where((category) => category['category_type'] == 'income')
-            .toList();
-        final expenseCategories = result['categories']
-            .where((category) => category['category_type'] == 'expense')
-            .toList();
-        userbox.put("Income Categories", incomeCategories);
-        userbox.put("Expense Categories", expenseCategories);
+      if (await getStatusCodeWithBearerToken(userbox.get("Token")) == 200) {
+        final result = await fetchCategories(userbox.get("Token"));
+        if (result['status_code'] == 200) {
+          final incomeCategories = result['categories']
+              .where((category) => category['category_type'] == 'income')
+              .toList();
+          final expenseCategories = result['categories']
+              .where((category) => category['category_type'] == 'expense')
+              .toList();
+          userbox.put("Income Categories", incomeCategories);
+          userbox.put("Expense Categories", expenseCategories);
+        }
       }
     }
   }
 
   void _checkBudgets() async {
     if (await connectionStatus()) {
-      final result = await fetchBudgets(userbox.get("Token"));
-      if (result['status_code'] == 200) {
-        userbox.put("Budget", result['data']['budgets']);
-        userbox.put(
-            "Total Spent",
-            (result['data']?['budgets']?['needs_spent_amount'] ?? 0) +
-                (result['data']?['budgets']?['wants_spent_amount'] ?? 0));
+      if (await getStatusCodeWithBearerToken(userbox.get("Token")) == 200) {
+        final result = await fetchBudgets(userbox.get("Token"));
+        if (result['status_code'] == 200) {
+          userbox.put("Budget", result['data']['budgets']);
+          userbox.put(
+              "Total Spent",
+              (result['data']?['budgets']?['needs_spent_amount'] ?? 0) +
+                  (result['data']?['budgets']?['wants_spent_amount'] ?? 0));
+        }
       }
     }
   }
 
   void _checkGoals() async {
     if (await connectionStatus()) {
-      final result = await fetchGoals(userbox.get("Token"));
-      final resultStats = await fetchGoalStats(userbox.get("Token"));
-      if (result['status_code'] == 200) {
-        userbox.put("Goals", result['data']);
+      if (await getStatusCodeWithBearerToken(userbox.get("Token")) == 200) {
+        final result = await fetchGoals(userbox.get("Token"));
+        final resultStats = await fetchGoalStats(userbox.get("Token"));
+        if (result['status_code'] == 200) {
+          userbox.put("Goals", result['data']);
 
-        int totalSavings = 0;
-        for (dynamic data in result['data']) {
-          int amount = data['accumulated_amount'];
-          totalSavings += amount;
+          int totalSavings = 0;
+          for (dynamic data in result['data']) {
+            int amount = data['accumulated_amount'];
+            totalSavings += amount;
+          }
+          userbox.put("Total Savings", totalSavings);
         }
-        userbox.put("Total Savings", totalSavings);
-      }
 
-      if (resultStats['status_code'] == 200) {
-        userbox.put("Goals Statistics", resultStats['goalsStats']);
+        if (resultStats['status_code'] == 200) {
+          userbox.put("Goals Statistics", resultStats['goalsStats']);
+        }
       }
     }
   }
@@ -300,16 +309,18 @@ class _MainAppState extends State<MainApp> {
   }
 
   void _makeDataAnalysis() async {
-    dynamic response = await fetchCategorizedIncome(userbox.get("Token"));
-    dynamic response2 = await fetchCategorizedExpense(userbox.get("Token"));
     if (await connectionStatus()) {
-      if (response2['status_code'] == 200) {
-        userbox.put("Categorized Expense List",
-            response2['data']?['categorize_expense']?['categories']);
-      }
-      if (response['status_code'] == 200) {
-        userbox.put("Categorized Income List",
-            response['data']?['categorize_income']?['categories']);
+      if (await getStatusCodeWithBearerToken(userbox.get("Token")) == 200) {
+        dynamic response = await fetchCategorizedIncome(userbox.get("Token"));
+        dynamic response2 = await fetchCategorizedExpense(userbox.get("Token"));
+        if (response2['status_code'] == 200) {
+          userbox.put("Categorized Expense List",
+              response2['data']?['categorize_expense']?['categories']);
+        }
+        if (response['status_code'] == 200) {
+          userbox.put("Categorized Income List",
+              response['data']?['categorize_income']?['categories']);
+        }
       }
     }
   }
@@ -323,23 +334,26 @@ class _MainAppState extends State<MainApp> {
 
   void _checkExpense() async {
     if (await connectionStatus()) {
-      dynamic balanceinfo = await fetchBalance("${userbox.get("Token")}");
-      dynamic totalIncome = await fetchIncome("${userbox.get("Token")}");
-      dynamic totalExpense = await fetchExpense("${userbox.get("Token")}");
-      dynamic transactions = await fetchTransactions("${userbox.get("Token")}");
+      if (await getStatusCodeWithBearerToken(userbox.get("Token")) == 200) {
+        dynamic balanceinfo = await fetchBalance("${userbox.get("Token")}");
+        dynamic totalIncome = await fetchIncome("${userbox.get("Token")}");
+        dynamic totalExpense = await fetchExpense("${userbox.get("Token")}");
+        dynamic transactions =
+            await fetchTransactions("${userbox.get("Token")}");
 
-      if (balanceinfo['success'] &&
-          totalExpense['success'] &&
-          totalIncome['success'] &&
-          transactions['status_code'] == 200) {
-        userbox.put("balance", balanceinfo['balance']);
-        userbox.put("totalIncome", totalIncome['balance']);
-        userbox.put("totalExpense", totalExpense['balance']);
-        userbox.put("transactions", transactions['data']['transactions']);
-      } else {
-        // print(userbox.get("Balance"));
-        // print(userbox.get("Token"));
-        // print(userbox.get("First Name"));
+        if (balanceinfo['success'] &&
+            totalExpense['success'] &&
+            totalIncome['success'] &&
+            transactions['status_code'] == 200) {
+          userbox.put("balance", balanceinfo['balance']);
+          userbox.put("totalIncome", totalIncome['balance']);
+          userbox.put("totalExpense", totalExpense['balance']);
+          userbox.put("transactions", transactions['data']['transactions']);
+        } else {
+          // print(userbox.get("Balance"));
+          // print(userbox.get("Token"));
+          // print(userbox.get("First Name"));
+        }
       }
     }
   }
@@ -355,7 +369,7 @@ class _MainAppState extends State<MainApp> {
               Authbox.get("App Bar Has Network Count") + 1);
         });
         if (Authbox.get("Has Network") == true &&
-            Authbox.get("App Bar Has Network Count") >= 5) {
+            Authbox.get("App Bar Has Network Count") >= 3) {
           if (mounted) {
             setState(() {
               appBarshouldShow = false;
